@@ -11,8 +11,10 @@ require 'rubygems'
 
 TEST_APP_NAME = 'TestApp.mxml'
 ROOT_DIR = File.dirname(__FILE__)
+FLEX_SDK_BIN = '/Applications/Adobe\ Flex\ Builder\ 3/sdks/4.0.0.4390/bin/'
 
 def get_executable(executable)
+  executable = FLEX_SDK_BIN + executable if !FLEX_SDK_BIN.empty?
   if RUBY_PLATFORM =~ /mswin32/
     executable << '.exe'
   end

@@ -6,11 +6,6 @@
 <classEntry path="org.ruboss.collections.RubossCollection"/>
 <classEntry path="org.ruboss.commands.CommandsEventDispatcher"/>
 <classEntry path="org.ruboss.commands.ICommand"/>
-<classEntry path="org.ruboss.components.DateTextInput"/>
-<classEntry path="org.ruboss.components.DateTimeTextInput"/>
-<classEntry path="org.ruboss.components.MoneyTextInput"/>
-<classEntry path="org.ruboss.components.RadioComboBox"/>
-<classEntry path="org.ruboss.components.RubossAutoComplete"/>
 <classEntry path="org.ruboss.controllers.AuxAIRController"/>
 <classEntry path="org.ruboss.controllers.AuxHTTPController"/>
 <classEntry path="org.ruboss.controllers.CacheController"/>

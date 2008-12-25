@@ -13,11 +13,6 @@
 		<class>org.ruboss.collections.RubossCollection</class>
 		<class>org.ruboss.commands.CommandsEventDispatcher</class>
 		<class>org.ruboss.commands.ICommand</class>
-		<class>org.ruboss.components.DateTextInput</class>
-		<class>org.ruboss.components.DateTimeTextInput</class>
-		<class>org.ruboss.components.MoneyTextInput</class>
-		<class>org.ruboss.components.RadioComboBox</class>
-		<class>org.ruboss.components.RubossAutoComplete</class>
 		<class>org.ruboss.controllers.AuxAIRController</class>
 		<class>org.ruboss.controllers.AuxHTTPController</class>
 		<class>org.ruboss.controllers.CacheController</class>
