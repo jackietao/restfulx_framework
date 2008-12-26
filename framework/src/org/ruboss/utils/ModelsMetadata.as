@@ -5,6 +5,7 @@ package org.ruboss.utils {
   import flash.utils.getQualifiedClassName;
   
   import mx.collections.ArrayCollection;
+  import mx.utils.StringUtil;
   
   public class ModelsMetadata {
     
@@ -149,6 +150,7 @@ package org.ruboss.utils {
           var refName:String = node.@name;
           var referAs:String;
           
+          var conditions:Object;
           var dependencies:Array = new Array;
           var descriptor:XML;
           
@@ -165,6 +167,7 @@ package org.ruboss.utils {
               }
             } else if (RubossUtils.isHasOne(node)) {
               descriptor = RubossUtils.getAttributeAnnotation(node, "HasOne")[0];
+              conditions = extractConditions(node, descriptor, fqn);
             } else if (RubossUtils.isHasMany(node)) {
               descriptor = RubossUtils.getAttributeAnnotation(node, "HasMany")[0];
               if (refName == "children") {
@@ -172,6 +175,7 @@ package org.ruboss.utils {
               }
               // hook up N-N = has_many(:through) relationships
               extractHasManyThroughRelationships(node, descriptor, fqn);
+              conditions = extractConditions(node, descriptor, fqn);
             }
             
             if (descriptor) {
@@ -187,12 +191,15 @@ package org.ruboss.utils {
               if (descriptor) {
                 referAs = descriptor.arg.(@key == "referAs").@value.toString();
               }
-            }       
+            } else if (RubossUtils.isHasOne(node)) {
+              descriptor = RubossUtils.getAttributeAnnotation(node, "HasOne")[0];
+              conditions = extractConditions(node, descriptor, fqn);              
+            }     
           }
 
           if (RubossUtils.isBelongsTo(node)) extractDependencies(dependencies, node, descriptor, refType);
 
-          refs[fqn][refName] = {type: refType, referAs: referAs};
+          refs[fqn][refName] = {type: refType, referAs: referAs, conditions: conditions};
           
           for each (var dependency:String in dependencies) {
             if (controllers[dependency] && dependency != fqn && (eager[fqn] as Array).indexOf(dependency) == -1) {
@@ -234,6 +241,21 @@ package org.ruboss.utils {
         }
         (hmts[target] as Array).push({type: fqn, attribute: attribute, refType: refType});
       }
+    }
+    
+    private function extractConditions(node:XML, descriptor:XML, fqn:String):Object {
+      var conditions:String = descriptor.arg.(@key == "conditions").@value.toString();
+      if (RubossUtils.isEmpty(conditions)) return null;
+      
+      var result:Object = new Object;
+      for each (var condition:String in conditions.split(",")) {
+        condition = StringUtil.trim(condition);
+        var keyValuePair:Array = condition.split(":");
+        var key:String = keyValuePair[0];
+        var value:String = keyValuePair[1];
+        result[key] = value;
+      }
+      return result;
     }
   }
 }

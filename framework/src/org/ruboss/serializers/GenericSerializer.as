@@ -2,6 +2,7 @@ package org.ruboss.serializers {
   import flash.utils.getDefinitionByName;
   
   import mx.utils.ObjectUtil;
+  import mx.utils.StringUtil;
   
   import org.ruboss.Ruboss;
   import org.ruboss.collections.ModelsCollection;
@@ -122,31 +123,49 @@ package org.ruboss.serializers {
             pluralName = (isParentRef) ? "children" : state.names[fqn]["plural"];
             singleName = state.names[fqn]["single"];
           }
+          
+          for each (var rel:String in pluralName.split(",")) {
+            rel = StringUtil.trim(rel);
+            // if we've got a plural definition which is annotated with [HasMany] 
+            // it's got to be a 1->N relationship           
+            if (ref != null && ref.hasOwnProperty(rel) && 
+              ObjectUtil.hasMetadata(ref, rel, "HasMany")) {
+              var items:ModelsCollection = ModelsCollection(ref[rel]);
+              if (items == null) {
+                items = new ModelsCollection;
+              }
               
-          // if we've got a plural definition which is annotated with [HasMany] 
-          // it's got to be a 1->N relationship           
-          if (ref != null && ref.hasOwnProperty(pluralName) && 
-            ObjectUtil.hasMetadata(ref, pluralName, "HasMany")) {
-            var items:ModelsCollection = ModelsCollection(ref[pluralName]);
-            if (items == null) {
-              items = new ModelsCollection;
+              var conditions:Object = state.refs[targetType][rel]["conditions"];
+              var allConditionsMet:Boolean = checkConditions(source, conditions);
+              
+              if (allConditionsMet) {
+                // add (or replace) the current item to the reference collection
+                if (items.hasItem(object)) {
+                  items.setItem(object);
+                } else {
+                  items.addItem(object);
+                }
+                
+                ref[rel] = items;
+              }              
             }
-            
-            // add (or replace) the current item to the reference collection
-            if (items.hasItem(object)) {
-              items.setItem(object);
-            } else {
-              items.addItem(object);
-            }
-            
-            ref[pluralName] = items;
-  
-          // if we've got a singular definition annotated with [HasOne] then it must be a 1->1 relationship
-          // link them up
-          } else if (ref != null && ref.hasOwnProperty(singleName) && 
-            ObjectUtil.hasMetadata(ref, singleName, "HasOne")) {
-            ref[singleName] = object;
           }
+
+          for each (var singleRel:String in singleName.split(",")) {
+            singleRel = StringUtil.trim(singleRel);
+            var singleConditions:Object = null;
+            if (state.refs[targetType].hasOwnProperty(singleRel) && state.refs[targetType][singleRel] != null) {
+              singleConditions = state.refs[targetType][singleRel]["conditions"];
+            }
+            
+            // if we've got a singular definition annotated with [HasOne] then it must be a 1->1 relationship
+            // link them up
+            if (ref != null && ref.hasOwnProperty(singleRel) && 
+              ObjectUtil.hasMetadata(ref, singleRel, "HasOne")) {
+              if (checkConditions(source, singleConditions)) ref[singleRel] = object;
+            }
+          }
+          
           // and the reverse
           object[targetName] = ref;
         } else if (isNestedArray) {
@@ -165,6 +184,25 @@ package org.ruboss.serializers {
     
     protected function processNestedArray(array:Object, type:String):ModelsCollection {
       return new ModelsCollection;
+    }
+    
+    protected function checkConditions(source:Object, conditions:Object):Boolean {
+      var allConditionsMet:Boolean = true;
+      if (conditions) {
+        for (var condition:String in conditions) {
+          condition = RubossUtils.toSnakeCase(condition);
+          if (source.hasOwnProperty(condition) && source[condition] == null) {
+            allConditionsMet = false;
+            break;
+          }
+          if (source.hasOwnProperty(condition) &&
+            source[condition].toString().search(conditions[condition]) == -1) {
+            allConditionsMet = false;
+            break;
+          }
+        }
+      }
+      return allConditionsMet;
     }
 
     protected function initializeModel(id:String, fqn:String):Object {
@@ -213,16 +251,20 @@ package org.ruboss.serializers {
   
           // e.g. object[client][timesheets]
           var items:ModelsCollection = object[localSingleName][relationship["attribute"]];
+          var conditions:Object = state.refs[relType][relationship["attribute"]]["conditions"];
+
           if (items == null) {
             items = new ModelsCollection;
           }
           
           // form 1, e.g. object[timesheet]
           if (object.hasOwnProperty(localSingleName) && object.hasOwnProperty(refNameSingle)) {
-            if (items.hasItem(object[refNameSingle])) {
-              items.setItem(object[refNameSingle]);
-            } else {
-              items.addItem(object[refNameSingle]);
+            if (checkConditions(object[refNameSingle], conditions)) {            
+              if (items.hasItem(object[refNameSingle])) {
+                items.setItem(object[refNameSingle]);
+              } else {
+                items.addItem(object[refNameSingle]);
+              }
             }
             object[localSingleName][relationship["attribute"]] = items;
             
@@ -231,7 +273,7 @@ package org.ruboss.serializers {
             if (object[refNamePlural] == null) {
               object[refNamePlural] = new ModelsCollection;
             }
-            object[localSingleName][relationship["attribute"]] = object[refNamePlural];          
+            object[localSingleName][relationship["attribute"]] = object[refNamePlural];        
           }
         } catch (e:Error) {
           // do something
