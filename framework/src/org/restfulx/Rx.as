@@ -241,6 +241,11 @@ package org.restfulx {
      */
     public static var sessionToken:String;
     
+    /**
+     * Stores any extra HTTP headers that needs to be sent to the backend
+     */
+    public static var customHttpHeaders:Object;
+    
     /** 
      * Stores current authenticity token.
      */
@@ -324,7 +329,7 @@ package org.restfulx {
      * @return new filtered RxCollection instance
      */
     public static function filter(items:ArrayCollection, filter:Function = null):RxCollection {
-      var results:RxCollection = new RxCollection(items.source.slice(0));
+      var results:RxCollection = new RxCollection(items.toArray().slice(0));
       return RxCollection(filter$(results, filter));
     }
     
@@ -353,7 +358,7 @@ package org.restfulx {
      * @return new filtered RxCollection instance
      */
     public static function filters(items:RxCollection, filters:Array = null):RxCollection {
-      var results:RxCollection = new RxCollection(items.source.slice(0));
+      var results:RxCollection = new RxCollection(items.toArray().slice(0));
       return filters$(results, filters);
     }
     
@@ -382,7 +387,7 @@ package org.restfulx {
      * @return new array collection with the sorts applied 
      */
     public static function sort(items:RxCollection, fields:Array = null):RxCollection {
-      var results:RxCollection = new RxCollection(items.source.slice(0));
+      var results:RxCollection = new RxCollection(items.toArray().slice(0));
       return sort$(results, fields);
     }
     
@@ -404,8 +409,8 @@ package org.restfulx {
         if (field is SortField) {
           sortField = SortField(field);
         } else {
-          for (var property:String in fields[field]) {
-            sortField[property] = fields[field][property];
+          for (var property:String in field) {
+            sortField[property] = field[property];
           }
         }
         sort.fields.push(sortField);
@@ -437,9 +442,14 @@ package org.restfulx {
      * reload the app on logout.)
      */
     public static function reset():void {
+      models.reset(null, true);
       models.errors = null;
       defaultMetadata = null;
       sessionToken = null;
+      authenticityToken = null;
+      customHttpHeaders = null;
+      undoredo.clear();
+      changes.errors = new RxCollection;
     }
     
     public function Rx(enforcer:PrivateEnforcer) {}

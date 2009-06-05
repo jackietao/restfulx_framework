@@ -82,11 +82,13 @@ package org.restfulx.controllers {
     public function index(models:Object):void {
       var fqn:String;
       if (models is TypedArray) {
-        fqn = TypedArray(models).itemType;
+        var modelsArray:TypedArray = models as TypedArray;
+        fqn = modelsArray.itemType;
+        (data[fqn] as ModelsCollection).metadata = modelsArray.metadata;
       } else if (models is RxModel) {
         fqn = getQualifiedClassName(models);
       }
-      Rx.models.dispatchEvent(new CacheUpdateEvent(fqn, CacheUpdateEvent.INDEX, data[fqn]));            
+      if (fqn != null) Rx.models.dispatchEvent(new CacheUpdateEvent(fqn, CacheUpdateEvent.INDEX, data[fqn]));            
     }
 
     /**
@@ -96,7 +98,7 @@ package org.restfulx.controllers {
      */
     public function show(model:RxModel):void {
       var fqn:String = getQualifiedClassName(model);
-      Rx.models.dispatchEvent(new CacheUpdateEvent(fqn, CacheUpdateEvent.SHOW, model));            
+      if (fqn != null) Rx.models.dispatchEvent(new CacheUpdateEvent(fqn, CacheUpdateEvent.SHOW, model));            
     }
 
     /**

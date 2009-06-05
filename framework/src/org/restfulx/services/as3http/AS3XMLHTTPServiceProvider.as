@@ -31,9 +31,14 @@ package org.restfulx.services.as3http {
   import mx.rpc.events.ResultEvent;
   
   import org.httpclient.HttpClient;
+  import org.httpclient.HttpRequest;
   import org.httpclient.events.HttpDataListener;
   import org.httpclient.events.HttpErrorEvent;
   import org.httpclient.events.HttpResponseEvent;
+  import org.httpclient.http.Delete;
+  import org.httpclient.http.Get;
+  import org.httpclient.http.Post;
+  import org.httpclient.http.Put;
   import org.restfulx.Rx;
   import org.restfulx.collections.ModelsCollection;
   import org.restfulx.controllers.ServicesController;
@@ -70,6 +75,7 @@ package org.restfulx.services.as3http {
     }
 
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#id
      */
     public override function get id():int {
@@ -77,6 +83,7 @@ package org.restfulx.services.as3http {
     }
         
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#index
      */
     public override function index(object:Object, responder:IResponder, metadata:Object = null, nestedBy:Array = null):void {      
@@ -89,10 +96,11 @@ package org.restfulx.services.as3http {
       }
       
       var uri:URI = new URI(url);
-      getIndexOrShowHttpClient(responder).get(uri);
+      getIndexOrShowHttpClient(responder).request(uri, addHeadersToHttpRequest(new Get()));
     }
     
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#show
      */
     public override function show(object:Object, responder:IResponder, metadata:Object = null, nestedBy:Array = null):void {      
@@ -106,10 +114,11 @@ package org.restfulx.services.as3http {
       }
       
       var uri:URI = new URI(url);
-      getIndexOrShowHttpClient(responder).get(uri);
+      getIndexOrShowHttpClient(responder).request(uri, addHeadersToHttpRequest(new Get()));
     }
 
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#create
      */    
     public override function create(object:Object, responder:IResponder, metadata:Object = null, nestedBy:Array = null,
@@ -118,26 +127,31 @@ package org.restfulx.services.as3http {
         var url:String = rootUrl + RxUtils.nestResource(object, nestedBy, urlSuffix);
         Rx.log.debug("sending create request to: " + url);
 
-        var uri:URI = new URI(url);
-
         var urlParams:String = urlEncodeMetadata(metadata);
         if (urlParams != "") {
           url += "?" + urlParams;  
         }
+        
+        var uri:URI = new URI(url);
 
         var data:ByteArray = new ByteArray();
         var serialized:String = serializer.marshall(object, recursive).toString();
         data.writeUTFBytes(serialized);
         data.position = 0;
+        
+        var request:HttpRequest = new Post();
+        request.body = data;
+        request.contentType = contentType;
       
         getCreateOrUpdateHttpClient(object, responder, metadata, nestedBy, recursive, 
-          undoRedoFlag, true).post(uri, data, contentType);
+          undoRedoFlag, true).request(uri, addHeadersToHttpRequest(request));
       } else {
         update(object, responder, metadata, nestedBy, recursive, undoRedoFlag);
       }
     }
     
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#update
      */
     public override function update(object:Object, responder:IResponder, metadata:Object = null, nestedBy:Array = null,
@@ -146,23 +160,28 @@ package org.restfulx.services.as3http {
       url = RxUtils.addObjectIdToResourceURL(url, object, urlSuffix);
       Rx.log.debug("sending update request to: " + url);
 
-      var uri:URI = new URI(url);
-
       var urlParams:String = urlEncodeMetadata(metadata);
       if (urlParams != "") {
         url += "?" + urlParams;  
       }
+
+      var uri:URI = new URI(url);
 
       var data:ByteArray = new ByteArray();
       var serialized:String = serializer.marshall(object, recursive).toString();
       data.writeUTFBytes(serialized);
       data.position = 0;
       
+      var request:HttpRequest = new Put();
+      request.body = data;
+      request.contentType = contentType;
+      
       getCreateOrUpdateHttpClient(object, responder, metadata, nestedBy, recursive, 
-        undoRedoFlag).put(uri, data, contentType); 
+        undoRedoFlag).request(uri, addHeadersToHttpRequest(request)); 
     }
     
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#destroy
      */
     public override function destroy(object:Object, responder:IResponder, metadata:Object = null, nestedBy:Array = null,
@@ -198,7 +217,7 @@ package org.restfulx.services.as3http {
         if (responder) responder.fault(event);
       });
       
-      client.del(uri);
+      client.request(uri, new Delete());
     }
     
     
@@ -265,6 +284,13 @@ package org.restfulx.services.as3http {
       });
       
       return client;      
+    }
+    
+    protected function addHeadersToHttpRequest(request:HttpRequest):HttpRequest {
+      for (var header:String in Rx.customHttpHeaders) {
+        request.addHeader(header, Rx.customHttpHeaders[header]);
+      }
+      return request;
     }
         
     protected function getHttpClient(onDataComplete:Function, onError:Function = null):HttpClient {

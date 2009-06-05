@@ -33,7 +33,7 @@ package org.restfulx.serializers {
   import org.restfulx.utils.RxUtils;
   
   /**
-   *  GenericSerializer groups together a few handy functions that are common,
+   * GenericSerializer groups together a few handy functions that are common,
    *  useful to all serializers. As such it is not meant to be initialized by
    *  itself but rather should be subclasses/extended.
    */
@@ -170,10 +170,6 @@ package org.restfulx.serializers {
               var items:ModelsCollection = ModelsCollection(ref[rel]);
               if (items == null) {
                 items = new ModelsCollection;
-                var sorts:Object = state.refs[targetType][rel]["sorts"];
-                if (sorts && sorts is Array) {
-                  Rx.sort$(items, sorts as Array);
-                }
               }
               
               var conditions:Object = state.refs[targetType][rel]["conditions"];
@@ -188,7 +184,12 @@ package org.restfulx.serializers {
                 }
                 
                 ref[rel] = items;
-              }              
+              }
+              
+              var sorts:Object = state.refs[targetType][rel]["sorts"];
+              if (sorts && sorts is Array) {
+                Rx.sort$(items, sorts as Array);
+              }
             }
           }
 

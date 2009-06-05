@@ -86,6 +86,7 @@ package org.restfulx.services.http {
     }
     
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#id
      */
     public function get id():int {
@@ -93,6 +94,7 @@ package org.restfulx.services.http {
     }
 
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#hasErrors
      */    
     public function hasErrors(object:Object):Boolean {
@@ -109,6 +111,7 @@ package org.restfulx.services.http {
     }
     
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#canLazyLoad
      */
     public function canLazyLoad():Boolean {
@@ -116,6 +119,7 @@ package org.restfulx.services.http {
     }
 
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#marshall
      */
     public function marshall(object:Object, recursive:Boolean = false):Object {
@@ -123,6 +127,7 @@ package org.restfulx.services.http {
     }
 
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#unmarshall
      */
     public function unmarshall(object:Object, disconnected:Boolean = false):Object {
@@ -130,6 +135,7 @@ package org.restfulx.services.http {
     }
     
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#index
      */
     public function index(object:Object, responder:IResponder, metadata:Object = null, nestedBy:Array = null):void {
@@ -145,6 +151,7 @@ package org.restfulx.services.http {
     }
     
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#show
      */
     public function show(object:Object, responder:IResponder, metadata:Object = null, nestedBy:Array = null):void {
@@ -161,6 +168,7 @@ package org.restfulx.services.http {
     }
 
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#create
      */    
     public function create(object:Object, responder:IResponder, metadata:Object = null, nestedBy:Array = null, 
@@ -176,13 +184,14 @@ package org.restfulx.services.http {
     }
     
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#update
      */
     public function update(object:Object, responder:IResponder, metadata:Object = null, nestedBy:Array = null,
       recursive:Boolean = false, undoRedoFlag:int = 0):void {
       var httpService:HTTPService = getHTTPService(object, nestedBy);
       httpService.method = URLRequestMethod.POST;
-      httpService.headers = {'X-HTTP-Method-Override': 'PUT'};
+      addHeaders(httpService, {'X-HTTP-Method-Override': 'PUT'});
       httpService.request = marshallToVO(object, recursive);
       httpService.request["_method"] = "PUT";
       httpService.url = RxUtils.addObjectIdToResourceURL(httpService.url, object, urlSuffix);
@@ -190,13 +199,14 @@ package org.restfulx.services.http {
     }
     
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#destroy
      */
     public function destroy(object:Object, responder:IResponder, metadata:Object = null, nestedBy:Array = null,
       recursive:Boolean = false, undoRedoFlag:int = 0):void {
       var httpService:HTTPService = getHTTPService(object, nestedBy);
       httpService.method = URLRequestMethod.POST;
-      httpService.headers = {'X-HTTP-Method-Override': 'DELETE'};
+      addHeaders(httpService, {'X-HTTP-Method-Override': 'DELETE'});
       httpService.request["_method"] = "DELETE";
       httpService.url = RxUtils.addObjectIdToResourceURL(httpService.url, object, urlSuffix);
       var instance:Object = this;
@@ -373,6 +383,7 @@ package org.restfulx.services.http {
       service.resultFormat = "e4x";
       service.useProxy = false;
       service.contentType = "application/x-www-form-urlencoded";
+      service.headers = Rx.customHttpHeaders;
       service.url = rootUrl + RxUtils.nestResource(object, nestedBy, urlSuffix);
       return service;
     }
@@ -470,6 +481,13 @@ package org.restfulx.services.http {
         }
       }
       return result;
+    }
+    
+    protected function addHeaders(service:HTTPService, headers:Object):void {
+      if (service.headers == null) service.headers = {};
+    	for (var key:String in headers) {
+    		service.headers[key] = headers[key];
+    	}
     }
   }
 }

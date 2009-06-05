@@ -26,6 +26,9 @@ package org.restfulx.services.as3http {
   
   import mx.rpc.IResponder;
   
+  import org.httpclient.HttpRequest;
+  import org.httpclient.http.Post;
+  import org.httpclient.http.Put;
   import org.restfulx.Rx;
   import org.restfulx.controllers.ServicesController;
   import org.restfulx.serializers.GAEXMLSerializer;
@@ -52,6 +55,7 @@ package org.restfulx.services.as3http {
     }
 
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#id
      */
     public override function get id():int {
@@ -59,6 +63,7 @@ package org.restfulx.services.as3http {
     }
 
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#create
      */    
     public override function create(object:Object, responder:IResponder, metadata:Object = null, nestedBy:Array = null,
@@ -71,18 +76,19 @@ package org.restfulx.services.as3http {
           url += "?" + urlParams;  
         }
         
-        trace("sending create request to: " + url);
+        Rx.log.debug("sending create request to: " + url);
 
         var uri:URI = new URI(url);
       
         getCreateOrUpdateHttpClient(object, responder, metadata, nestedBy, recursive, 
-          undoRedoFlag, true).postFormData(uri, [marshallToVO(object, recursive)]);
+          undoRedoFlag, true).request(uri, addHeadersToHttpRequest(new Post([marshallToVO(object, recursive)])));
       } else {
         update(object, responder, metadata, nestedBy, recursive, undoRedoFlag);
       }
     }
     
     /**
+     * @inheritDoc
      * @see org.restfulx.services.IServiceProvider#update
      */
     public override function update(object:Object, responder:IResponder, metadata:Object = null, nestedBy:Array = null,
@@ -95,11 +101,15 @@ package org.restfulx.services.as3http {
         url += "?" + urlParams;  
       }
         
-      trace("sending update request to: " + url);
+      Rx.log.debug("sending update request to: " + url);
 
       var uri:URI = new URI(url);
+      
+      var request:HttpRequest = new Put();
+      request.setFormData([marshallToVO(object, recursive)]);
+      
       getCreateOrUpdateHttpClient(object, responder, metadata, nestedBy, recursive, 
-          undoRedoFlag).putFormData(uri, [marshallToVO(object, recursive)]);
+          undoRedoFlag).request(uri, addHeadersToHttpRequest(request));
     }
   }
 }

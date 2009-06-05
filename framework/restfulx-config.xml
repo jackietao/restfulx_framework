@@ -26,9 +26,14 @@
     <class>org.restfulx.controllers.ModelsController</class>
     <class>org.restfulx.controllers.RxApplicationController</class>
     <class>org.restfulx.controllers.SerializersController</class>
+    <class>org.restfulx.controllers.ServerPushController</class>
     <class>org.restfulx.controllers.ServicesController</class>
     <class>org.restfulx.controllers.UndoRedoController</class>
     <class>org.restfulx.controllers.mock.MockAuxHTTPController</class>
+    <class>org.restfulx.events.AfterCreateEvent</class>
+    <class>org.restfulx.events.AfterDestroyEvent</class>
+    <class>org.restfulx.events.AfterSaveEvent</class>
+    <class>org.restfulx.events.AfterUpdateEvent</class>
     <class>org.restfulx.events.CacheUpdateEvent</class>
     <class>org.restfulx.events.CommandExecutionEvent</class>
     <class>org.restfulx.events.PullEndEvent</class>
@@ -37,6 +42,8 @@
     <class>org.restfulx.events.PushErrorEvent</class>
     <class>org.restfulx.events.PushItemEvent</class>
     <class>org.restfulx.events.PushStartEvent</class>
+    <class>org.restfulx.events.RxAutoCompleteItemEvent</class>
+    <class>org.restfulx.events.ServerPushEvent</class>
     <class>org.restfulx.events.ServiceCallStartEvent</class>
     <class>org.restfulx.events.ServiceCallStopEvent</class>
     <class>org.restfulx.events.ServiceErrorEvent</class>

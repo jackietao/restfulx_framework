@@ -22,7 +22,7 @@
  * Redistributions of files must retain the above copyright notice.
  ******************************************************************************/
 package org.restfulx.collections {
-
+ 
   /**
    * Adds a few handy methods to ArrayCollection class to simplify working 
    * with model objects. ModelsCollection is expected to always contain
@@ -32,6 +32,8 @@ package org.restfulx.collections {
    * properties.
    */
   public class ModelsCollection extends RxCollection {
+    
+    public var metadata:Object;
     
     /** 
      * @see mx.collections.ArrayCollection

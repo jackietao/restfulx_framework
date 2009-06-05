@@ -22,6 +22,8 @@
  * Redistributions of files must retain the above copyright notice.
  ******************************************************************************/
 package org.restfulx.utils {
+  import com.adobe.utils.DateUtil;
+  
   import flash.events.Event;
   import flash.net.URLRequest;
   import flash.net.navigateToURL;
@@ -303,6 +305,10 @@ package org.restfulx.utils {
     public static function nestResource(object:Object, nestedBy:Array = null, suffix:String = "fxml"):String {
       var result:String = "";
       var fqn:String = getQualifiedClassName(object);
+      
+      if (Rx.models.state.controllers[fqn] == null) {
+        throw new Error("Cannot verify that " + fqn + " is a valid RestfulX model. Make sure that you have referenced it in your ApplicationController.");
+      }
       if (nestedBy == null || nestedBy.length == 0) 
         return RxUtils.getResourcePathPrefix(object) + 
           Rx.models.state.controllers[fqn] + "." + suffix;
@@ -421,6 +427,18 @@ package org.restfulx.utils {
     public static function upperCaseFirst(string:String):String {
       return string.charAt(0).toUpperCase() + string.slice(1);
     }
+
+    /**
+     * Convert from ISO date representation to an actual AS3 Date object
+     */
+    public static function isoToDate(value:String):Date {
+      var dateStr:String = value;
+      dateStr = dateStr.replace(/-/g, "/");
+      dateStr = dateStr.replace("T", " ");
+      dateStr = dateStr.replace("Z", " GMT-0000");
+      dateStr = dateStr.replace("UTC", " GMT-0000");
+      return new Date(Date.parse(dateStr));
+    }
     
     /**
      * Casts a variable to specific type from a string, while trying to do the right thing
@@ -432,12 +450,15 @@ package org.restfulx.utils {
       if (targetType == "boolean") {
         value = String(value).toLowerCase();
         return (value == "true" || value == 1) ? true : false;
-      } else if (targetType == "date" || targetType == "datetime") {
-        if (value is String) {
-          var date:String = String(value).replace("T", " ").replace(new RegExp("-", "g"), "/").replace(/\.\d+$/, "");
-          return new Date(Date.parse(date));
-        } else {
-          return new Date(Date.parse(value));
+      } else if (targetType == "date") {
+        var date:String = (value as String).replace(/-/g, "/");
+        return new Date(Date.parse(date));
+      } else if (targetType == "datetime") {
+        var datetime:String = (value as String).replace(" ", "T");
+        try {
+          return DateUtil.parseW3CDTF(datetime);
+        } catch (e:Error) {
+          return new Date(Date.parse(datetime.replace(/-/g, "/").replace("T", " ")));
         }
       } else {
         return String(value).replace("\\x3A", ":").split("\\n").join("\n");
@@ -452,12 +473,13 @@ package org.restfulx.utils {
       
       if (object[property] is Date) {
         var formatter:DateFormatter = new DateFormatter;
+        var date:Date = object[property] as Date;
         if (ObjectUtil.hasMetadata(object, property, "DateTime")) {
-          formatter.formatString = "YYYY-MM-DDTHH:NN:SS";
+          return DateUtil.toW3CDTF(date);
         } else {
           formatter.formatString = "YYYY-MM-DD";
+          return formatter.format(date);
         }
-        return formatter.format(object[property] as Date);
       } else if (object[property] is Number) {
         var num:Number = Number(object[property]);
         if (isNaN(num)) {
@@ -566,7 +588,7 @@ package org.restfulx.utils {
      */
     public static function navToURL(url:Object, target:String = "_top"):Boolean {
       var request:URLRequest;
-      if (url is String) {
+      if (url is String && !isEmpty(url as String)) {
         request = new URLRequest(String(url));
       } else if (url is URLRequest) {
         request = URLRequest(url);
